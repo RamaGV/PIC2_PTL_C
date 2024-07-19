@@ -41,20 +41,22 @@ int main(void){
 	DATA_PTL_cargaXY();
 	BTH_init();
 	PAD_init();
+    
   
   LCD_clear();
 	LCD_goto(1,1);
 	LCD_print("  Inicializando LCD");
-	_delay_ms(3000);
-  
-	menu_estadoActual = opc_bth;
-	LCD_menu[menu_estadoActual]();
-  
+  _delay_ms(500); 
   // RECIBIR Y PROCESAR NUEVO STOCK
   BTH_envia("AT$C\0");
   _delay_ms(2000); 
   BTH_recibe();
   DATA_PTL_cargarStock();
+  _delay_ms(1000); 
+
+	menu_estadoActual = opc_bth;
+	LCD_menu[menu_estadoActual]();
+
   
 	while (1){
 		uint8_t key = PAD_leer(); // Si se presiona el pad, guarda la key presionada
@@ -108,21 +110,24 @@ int main(void){
           switch (key){
             case 'A':
               LCD_enviando();
+              memset(PTL_datos.buffer_envio, 0, sizeof(PTL_datos.buffer_envio));
               strcat(PTL_datos.buffer_envio,  "AT$A");
               DATA_PTL_generarEnvio(PTL_datos);
+              _delay_ms(2000);
               
+              modo_espera = true;
               menu_estadoActual = manipulacion_espera;
             break;
             
             case 'B':
               LCD_stock();
-              _delay_ms(3000);
+              _delay_ms(2000);
             break;
             
             case 'C':
               LCD_vaciar();
               DATA_PTL_vaciarCeldas();
-              _delay_ms(3000);
+              _delay_ms(2000);
             break;
             
             case 'D':
@@ -256,19 +261,22 @@ int main(void){
           switch (key){
           case 'A':
             LCD_enviando();
+            memset(PTL_datos.buffer_envio, 0, sizeof(PTL_datos.buffer_envio));
             strcat(PTL_datos.buffer_envio,  "AT$B");
             DATA_PTL_generarEnvio(PTL_datos);
+            _delay_ms(2000);
             
+            modo_espera = true;
             menu_estadoActual = manipulacion_espera;
           break;
           case 'B': // VER STOCK
             LCD_stock(); // MUESTRA STOCK ALMACENADO
-            _delay_ms(3000);
+            _delay_ms(2000);
           break;
           case 'C': // VACIA CELDAS
             LCD_vaciar();
             DATA_PTL_vaciarCeldas();
-            _delay_ms(200);
+            _delay_ms(2000);
           break;
           case 'D': // SALIR
             menu_estadoActual = opc_quitar;
@@ -312,9 +320,13 @@ int main(void){
           */
         
         case manipulacion_espera:
-          modo_espera = true;
           
           switch(key){  
+            case '1':
+              BTH_envia("AT\0");
+              _delay_ms(2000);
+              BTH_recibe();
+            break;
             case '9':
               PTL_datos.buffer_envio[0] = 'O';
               PTL_datos.buffer_envio[1] = 'K';
@@ -338,7 +350,7 @@ int main(void){
         BTH_recibe();
         DATA_PTL_cargarStock();
         
-        // Se limpia el buffer de envio y vuelve a 0 el indice.
+        // Se limpia el buffer de envio y vuelve a 0 el indice. 
         memset(PTL_datos.buffer_envio, 0, sizeof(PTL_datos.buffer_envio));
         DATA_PTL_vaciarCeldas();
         indiceCelda = 0;
